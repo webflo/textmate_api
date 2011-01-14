@@ -1,0 +1,9 @@
+; $Id$
+name = TextMate API
+description = "Search a exact match for functions. Use by TextMate Drupal Bundle"
+
+; Core version (required)
+core = 6.x
+
+; Module dependencies
+dependencies[] = api

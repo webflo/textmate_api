@@ -1,0 +1,57 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * This is the file description for Untitled module.
+ *
+ * In this more verbose, multi-line description, you can specify what this
+ * file does exactly. Make sure to wrap your documentation in column 78 so
+ * that the file can be displayed nicely in default-sized consoles.
+ */
+
+/**
+ * Implements hook_perm().
+ */
+function textmate_api_perm() {
+  return array('administer textmate_api', 'use textmate_api');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function textmate_api_menu() {
+  $items = array();
+
+  $items['textmate_api/search/%/%'] = array(
+    'title' => 'Search',
+    'page callback' => 'textmate_perform_search',
+    'page arguments' => array(2),
+    'access arguments' => array('use textmate_api'),
+  );
+  
+  return $items;
+}
+
+/**
+ * Page callback. Perform search search. Search exact match and redirect
+ */
+function textmate_perform_search($branch_name) {
+  $keywords = array_slice(arg(), 3);
+  $search = array_merge(array($branch_name), $keywords);
+    
+  $items = array();
+  $query = db_query("SELECT b.branch_name, b.project, ad.* FROM {api_branch} b INNER JOIN {api_documentation} ad ON b.branch_id = ad.branch_id LEFT JOIN {api_overrides} ao ON ao.did = ad.did WHERE b.branch_name = '%s' AND (ao.did IS NULL OR ao.root_did = ao.did) AND ad.title IN (" . db_placeholders($keywords, 'varchar') . ")", $search);
+  while($item = db_fetch_object($query)) {
+    $items[] = $item;
+  }
+  
+  // Exact match found
+  if (count($items) == 1) {
+    $branches = api_get_branches();
+    drupal_goto(api_url($items[0]));
+  } else {
+    // trigger default api search
+    drupal_goto('api/search/'. implode('/', $search));
+  }
+}
